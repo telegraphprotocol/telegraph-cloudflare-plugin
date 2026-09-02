@@ -5,7 +5,7 @@ import {
 } from "@telegraph/miner-core";
 import { loadOrCreateWallet } from "../wallet.js";
 import { readConfig, writeConfig } from "../state.js";
-import { ask } from "../prompt.js";
+import { openPrompt } from "../prompt.js";
 
 export async function initCommand(cwd: string): Promise<void> {
   const existing = readConfig(cwd);
@@ -31,23 +31,28 @@ export async function initCommand(cwd: string): Promise<void> {
     console.log(`Warning: could not fetch the canonical intent list (${String(err)}). You can still type intents manually.`);
   }
 
-  const slug = await ask("Miner slug (kebab-case)", "my-miner");
-  const name = await ask("Display name", slug);
-  const description = await ask("Description (optional)");
+  const prompter = openPrompt();
+  let slug: string, name: string, description: string, intentsRaw: string, priceRaw: string, feeAddress: string;
+  try {
+    slug = await prompter.ask("Miner slug (kebab-case)", "my-miner");
+    name = await prompter.ask("Display name", slug);
+    description = await prompter.ask("Description (optional)");
 
-  if (canonicalIntents.length > 0) {
-    console.log(`Canonical intents: ${canonicalIntents.join(", ")}`);
+    if (canonicalIntents.length > 0) {
+      console.log(`Canonical intents: ${canonicalIntents.join(", ")}`);
+    }
+    intentsRaw = await prompter.ask("Supported intents (comma-separated)", "WEB_SEARCH");
+    priceRaw = await prompter.ask("Floor price in micro-USDC (10000 = $0.01)", "10000");
+    feeAddress = await prompter.ask("Payout address", wallet.address);
+  } finally {
+    prompter.close();
   }
-  const intentsRaw = await ask("Supported intents (comma-separated)", "WEB_SEARCH");
+
   const supportedIntents = intentsRaw
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
-
-  const priceRaw = await ask("Floor price in micro-USDC (10000 = $0.01)", "10000");
   const minPriceUsdc = Number.parseInt(priceRaw, 10);
-
-  const feeAddress = await ask("Payout address", wallet.address);
 
   writeConfig(cwd, {
     slug,
