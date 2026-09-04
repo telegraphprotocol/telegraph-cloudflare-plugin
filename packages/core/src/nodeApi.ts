@@ -10,9 +10,24 @@ export async function pickFreeYamlId(nodeApiUrl: string): Promise<number> {
   if (!res.ok) {
     throw new Error(`GET /api/miners failed: ${res.status}`);
   }
-  const miners = (await res.json()) as Array<{ id?: number }>;
-  const ids = miners.map((m) => m.id).filter((id): id is number => typeof id === "number");
-  return ids.length === 0 ? 1 : Math.max(...ids) + 1;
+  // The live node serializes `id` as a STRING ("200"), not a number, even
+  // though the YAML schema types it as an integer. Coerce rather than
+  // type-filter: a `typeof id === "number"` check silently drops every
+  // record and hands back id 1, which on a populated network is long taken
+  // — the registration then gets rejected for an id conflict.
+  const miners = (await res.json()) as Array<{ id?: number | string }>;
+  const taken = new Set(
+    miners.map((m) => Number(m.id)).filter((id) => Number.isSafeInteger(id) && id >= 0)
+  );
+
+  // Smallest free id rather than max+1: one miner is live on the testnet
+  // with id 708425, and max+1 would inflate every subsequent registration
+  // off that single outlier forever. Uniqueness is only enforced across
+  // ACTIVE miners, which is exactly what /api/miners lists. Start at 1 —
+  // the schema says treat 0 as taken, not as a default.
+  let candidate = 1;
+  while (taken.has(candidate)) candidate++;
+  return candidate;
 }
 
 export async function getMinerStatus(nodeApiUrl: string, registrationId: string): Promise<MinerStatus> {

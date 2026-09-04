@@ -23,6 +23,15 @@ describe("withTelegraphMiner", () => {
     expect(doc.slug).toBe("test-miner");
   });
 
+  it("explains a bad manifest config in the response body, not an opaque 500", async () => {
+    const { yamlId, ...noId } = config;
+    const fetch = withTelegraphMiner(async () => ({ result: null }), noId as typeof config);
+    const res = await fetch(new Request("https://my-worker.example.workers.dev/.well-known/telegraph.yaml"));
+
+    expect(res.status).toBe(500);
+    expect(await res.text()).toMatch(/yamlId/);
+  });
+
   it("routes POST / to the handler and wraps the result", async () => {
     const fetch = withTelegraphMiner(
       async ({ intent, query }) => ({ result: { echoed: query, intent } }),

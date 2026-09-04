@@ -29,15 +29,26 @@ export function withTelegraphMiner(
     const url = new URL(request.url);
 
     if (url.pathname === MANIFEST_PATH) {
-      const resolved: ResolvedMinerConfig = {
-        ...config,
-        baseUrl: url.origin,
-        feeAddress: requireFeeAddress(config),
-      };
-      return new Response(buildIntegrationYaml(resolved), {
-        status: 200,
-        headers: { "Content-Type": "text/yaml; charset=utf-8" },
-      });
+      // A misconfigured manifest is the developer's most likely failure, and
+      // it is only ever read by curl or by a Telegraph node — so answer with
+      // the actual reason in plain text rather than letting the throw become
+      // an opaque platform 500.
+      try {
+        const resolved: ResolvedMinerConfig = {
+          ...config,
+          baseUrl: url.origin,
+          feeAddress: requireFeeAddress(config),
+        };
+        return new Response(buildIntegrationYaml(resolved), {
+          status: 200,
+          headers: { "Content-Type": "text/yaml; charset=utf-8" },
+        });
+      } catch (err) {
+        return new Response(err instanceof Error ? err.message : String(err), {
+          status: 500,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        });
+      }
     }
 
     if (url.pathname === "/" && request.method === "POST") {
