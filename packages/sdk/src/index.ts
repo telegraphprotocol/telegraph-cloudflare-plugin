@@ -1,4 +1,9 @@
-import { buildIntegrationYaml } from "@telegraph/miner-core";
+// Deep import, not the package barrel: the barrel re-exports hash.js
+// (node:crypto) and chain.js (viem), neither of which exists in the
+// Workers runtime. Tree-shaking drops them, but esbuild still warns at
+// resolve time — and a scary "your Worker may throw at runtime" on every
+// single deploy is not what a plug-and-play tool should print.
+import { buildIntegrationYaml } from "@telegraph/miner-core/dist/yaml.js";
 import type { MinerConfig, ResolvedMinerConfig } from "@telegraph/miner-core";
 
 export type TelegraphMinerConfig = MinerConfig & { yamlId: number };
