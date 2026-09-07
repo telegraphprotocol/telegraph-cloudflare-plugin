@@ -1,4 +1,4 @@
-# telegraph-miner-plugin
+# telegraph-cloudflare-plugin
 
 Turn a Cloudflare Worker into an active Telegraph miner with `wrangler
 deploy` — no hand-written YAML, no manual `cast send`, no separate hosting
