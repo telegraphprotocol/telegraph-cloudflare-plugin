@@ -1,4 +1,4 @@
-# Telegraph Miner Plugin — Design
+# Telegraph Cloudflare Plugin — Design
 
 **Status:** Approved for implementation
 **Date:** 2026-09-02
