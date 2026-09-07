@@ -78,5 +78,12 @@ export async function deployCommand(cwd: string): Promise<void> {
 
   console.log("Waiting for activation (this can take a few minutes)...");
   const status = await pollUntilSettled(network.nodeApiUrl, registrationId.toString());
+  if (!status) {
+    console.log(
+      `Not indexed by the node yet. The registration is on-chain (id ${registrationId}) and will be picked up; ` +
+        "run `telegraph-miner status` later to check."
+    );
+    return;
+  }
   console.log(`Status: ${status.activation_status}${status.rejection_reason ? ` (${status.rejection_reason})` : ""}`);
 }

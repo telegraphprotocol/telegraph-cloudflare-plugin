@@ -11,6 +11,12 @@ export async function statusCommand(cwd: string): Promise<void> {
 
   const network = resolveNetwork(process.env.TELEGRAPH_NETWORK);
   const status = await getMinerStatus(network.nodeApiUrl, state.registrationId);
+  if (!status) {
+    console.log(`slug:              ${state.slug}`);
+    console.log(`registrationId:    ${state.registrationId}`);
+    console.log("activation_status: not indexed by the node yet");
+    return;
+  }
 
   console.log(`slug:              ${state.slug}`);
   console.log(`registrationId:    ${state.registrationId}`);

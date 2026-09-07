@@ -30,8 +30,18 @@ export async function pickFreeYamlId(nodeApiUrl: string): Promise<number> {
   return candidate;
 }
 
-export async function getMinerStatus(nodeApiUrl: string, registrationId: string): Promise<MinerStatus> {
+/**
+ * Returns null when the node has no row for this registration yet.
+ *
+ * A registration confirmed on-chain is still absent from miner_registry until
+ * the node indexes the event, so 404 here means "not indexed yet", not "does
+ * not exist" — verified against the live testnet node, which was six hours
+ * past its most recent registration while ours sat one id beyond the
+ * frontier. Callers wait it out rather than treating it as a failure.
+ */
+export async function getMinerStatus(nodeApiUrl: string, registrationId: string): Promise<MinerStatus | null> {
   const res = await fetch(`${nodeApiUrl}/api/miners/${registrationId}`);
+  if (res.status === 404) return null;
   if (!res.ok) {
     throw new Error(`GET /api/miners/${registrationId} failed: ${res.status}`);
   }
@@ -65,16 +75,20 @@ export async function fetchServedYaml(
   );
 }
 
-/** Polls until the registration reaches a terminal or "active" status. */
+/**
+ * Polls until the registration reaches a terminal or "active" status.
+ * Resolves null if it is still unindexed at the deadline — the registration is
+ * on-chain regardless, so that is a "check back later", not a failure.
+ */
 export async function pollUntilSettled(
   nodeApiUrl: string,
   registrationId: string,
   { timeoutMs = 10 * 60 * 1000, intervalMs = 15000 }: { timeoutMs?: number; intervalMs?: number } = {}
-): Promise<MinerStatus> {
+): Promise<MinerStatus | null> {
   const terminal = new Set(["active", "rejected", "deregistered", "unreachable"]);
   const deadline = Date.now() + timeoutMs;
   let status = await getMinerStatus(nodeApiUrl, registrationId);
-  while (!terminal.has(status.activation_status) && Date.now() < deadline) {
+  while ((status === null || !terminal.has(status.activation_status)) && Date.now() < deadline) {
     await new Promise((r) => setTimeout(r, intervalMs));
     status = await getMinerStatus(nodeApiUrl, registrationId);
   }
