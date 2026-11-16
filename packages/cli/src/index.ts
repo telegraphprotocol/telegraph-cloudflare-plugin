@@ -18,7 +18,7 @@ Commands:
 
 Env:
   TELEGRAPH_EVM_PRIVATE_KEY   Miner wallet key (generated into .env by init if unset)
-  TELEGRAPH_NETWORK           Network name (default: base-sepolia)
+  TELEGRAPH_NETWORK           Network name (default: beta-2)
   TELEGRAPH_NODE_URL          Override the node API URL
   TELEGRAPH_WORKER_URL        Skip wrangler-output URL detection, use this instead
 `;

@@ -2,6 +2,7 @@ import {
   resolveNetwork,
   makeClients,
   registerMiner,
+  ensureMinerBond,
   pickFreeYamlId,
   fetchServedYaml,
   pollUntilSettled,
@@ -55,6 +56,7 @@ export async function deployCommand(cwd: string): Promise<void> {
 
   const wallet = loadOrCreateWallet(cwd);
   const clients = makeClients(network, wallet.privateKey);
+  await ensureMinerBond(clients, network, config.supportedIntents.length);
 
   console.log("Submitting registerMiner...");
   const { txHash, registrationId } = await registerMiner(clients, network.diamondAddress, {
@@ -68,7 +70,7 @@ export async function deployCommand(cwd: string): Promise<void> {
   console.log(`Registration id: ${registrationId}`);
 
   writeState(cwd, {
-    network: process.env.TELEGRAPH_NETWORK || "base-sepolia",
+    network: process.env.TELEGRAPH_NETWORK || "beta-2",
     yamlId: config.yamlId,
     registrationId: registrationId.toString(),
     slug: config.slug,

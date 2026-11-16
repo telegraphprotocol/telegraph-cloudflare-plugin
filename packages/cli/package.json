@@ -4,7 +4,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "telegraph-miner": "dist/index.js"
+    "telegraph-miner": "bin/telegraph-miner.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

@@ -5,3 +5,4 @@ export * from "./yaml.js";
 export * from "./hash.js";
 export * from "./chain.js";
 export * from "./nodeApi.js";
+export * from "./bond.js";
