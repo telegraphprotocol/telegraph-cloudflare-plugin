@@ -66,16 +66,23 @@ async function sendAndGetRegistrationId(
   // registerMiner and updateMiner) — that's one thing too many for viem's
   // per-function ABI overload inference, so we step outside it deliberately
   // rather than fighting the type checker for two call sites.
-  const hash = await walletClient.writeContract({
+  const request = {
     address: diamondAddress,
     abi: minerRegistryAbi,
     functionName,
     args,
     account,
     chain: walletClient.chain,
-  } as Parameters<typeof walletClient.writeContract>[0]);
+  } as Parameters<typeof walletClient.writeContract>[0];
+  // The diamond forwards calls into libraries, so a tx sent with exactly the
+  // estimate can run out of gas inside them (updateMiner did on beta 2).
+  const gas = ((await publicClient.estimateContractGas(request as never)) * 13n) / 10n;
+  const hash = await walletClient.writeContract({ ...request, gas });
 
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status !== "success") {
+    throw new Error(`${functionName} failed on-chain (tx ${hash}).`);
+  }
 
   const logs = parseEventLogs({
     abi: minerRegistryAbi,

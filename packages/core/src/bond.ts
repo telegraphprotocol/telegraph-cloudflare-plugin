@@ -40,7 +40,8 @@ export async function ensureMinerBond(clients: Clients, network: NetworkConfig, 
 
   const send = async (address: Hex, abi: any, functionName: string, args: unknown[]) => {
     const hash = await walletClient.writeContract({ address, abi, functionName, args, account, chain });
-    await publicClient.waitForTransactionReceipt({ hash });
+    const receipt = await publicClient.waitForTransactionReceipt({ hash });
+    if (receipt.status !== "success") throw new Error(`${functionName} failed on-chain (tx ${hash}).`);
   };
 
   const have = await publicClient.readContract({ address: machina, abi: erc20Abi, functionName: "balanceOf", args: [me] });
