@@ -1,4 +1,4 @@
-import { erc20Abi, formatEther, parseAbi, type Hex } from "viem";
+import { erc20Abi, formatEther, parseAbi, parseEther, type Hex } from "viem";
 import type { Clients } from "./chain.js";
 import type { NetworkConfig } from "./network.js";
 
@@ -24,9 +24,10 @@ export async function ensureMinerBond(clients: Clients, network: NetworkConfig, 
   const diamond = network.diamondAddress;
   const chain = walletClient.chain;
 
-  if ((await publicClient.getBalance({ address: me })) === 0n) {
+  // Bond and registration take up to five txs, about 0.002 ETH on Sepolia.
+  if ((await publicClient.getBalance({ address: me })) < parseEther("0.003")) {
     throw new Error(
-      `Your miner wallet ${me} has no Sepolia ETH for gas.\n` +
+      `Your miner wallet ${me} needs a little more Sepolia ETH for gas.\n` +
         "Get about 0.01 from a free faucet, e.g. https://cloud.google.com/application/web3/faucet/ethereum/sepolia, then run this again."
     );
   }

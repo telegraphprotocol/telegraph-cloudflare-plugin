@@ -44,10 +44,13 @@ export async function initCommand(cwd: string): Promise<void> {
     description = await prompter.ask("Description (optional)");
 
     console.log(`Intents and what each one means: ${network.nodeApiUrl}/engine/v1/intents`);
-    for (;;) {
+    for (let last = ""; ; last = intentsRaw) {
       intentsRaw = await prompter.ask("Supported intents (comma-separated)", "WEB_SEARCH_GENERAL");
-      const unknown = canonicalIntents.length ? splitList(intentsRaw).filter((i) => !canonicalIntents.includes(i)) : [];
-      if (unknown.length === 0) break;
+      const list = splitList(intentsRaw);
+      const unknown = canonicalIntents.length ? list.filter((i) => !canonicalIntents.includes(i)) : [];
+      if (list.length > 0 && unknown.length === 0) break;
+      if (intentsRaw === last) throw new Error("No valid intent given. Run `telegraph-miner init` again.");
+      if (list.length === 0) console.log("List at least one intent.");
       for (const name of unknown) {
         const close = canonicalIntents.filter((i) => i.startsWith(name));
         console.log(`"${name}" is not an intent on the network.${close.length ? ` Did you mean: ${close.join(", ")}?` : ""}`);
