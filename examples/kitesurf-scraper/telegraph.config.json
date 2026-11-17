@@ -2,7 +2,8 @@
   "slug": "kitesurf-scraper-example",
   "name": "Kitesurf Scraper Example",
   "description": "Example miner built on Cloudflare Kitesurf",
-  "supportedIntents": ["WEB_SEARCH"],
-  "minPriceUsdc": 10000,
-  "feeAddress": "0x0000000000000000000000000000000000dEaD"
+  "supportedIntents": [
+    "WEB_SEARCH_GENERAL"
+  ],
+  "minPriceUsdc": 10000
 }

@@ -2,6 +2,7 @@ import {
   resolveNetwork,
   makeClients,
   registerMiner,
+  ensureMinerBond,
   pickFreeYamlId,
   fetchServedYaml,
   pollUntilSettled,
@@ -21,13 +22,21 @@ export async function deployCommand(cwd: string): Promise<void> {
 
   const network = resolveNetwork(process.env.TELEGRAPH_NETWORK);
 
-  // The YAML `id` field must be baked into the deployed bundle (the Worker
-  // serves its own manifest), so it has to be picked and frozen BEFORE
-  // `wrangler deploy` runs, not after — see the design spec.
-  if (config.yamlId === undefined) {
-    config.yamlId = await pickFreeYamlId(network.nodeApiUrl);
-    writeConfig(cwd, config);
-    console.log(`Assigned YAML id ${config.yamlId}.`);
+  const wallet = loadOrCreateWallet(cwd);
+
+  // The YAML `id` and payout address are baked into the deployed bundle (the
+  // Worker serves its own manifest), so they are frozen BEFORE `wrangler
+  // deploy` runs — see the design spec. Before the first registration the id
+  // is re-picked, as the one from `init` may have been taken since.
+  let yamlId = config.yamlId;
+  if (!readState(cwd) || yamlId === undefined) {
+    yamlId = await pickFreeYamlId(network.nodeApiUrl);
+    if (config.yamlId !== yamlId || !config.feeAddress) {
+      config.yamlId = yamlId;
+      config.feeAddress ??= wallet.address;
+      writeConfig(cwd, config);
+      console.log(`YAML id ${yamlId}, payouts to ${config.feeAddress}.`);
+    }
   }
 
   console.log("Running wrangler deploy...");
@@ -53,8 +62,8 @@ export async function deployCommand(cwd: string): Promise<void> {
     return;
   }
 
-  const wallet = loadOrCreateWallet(cwd);
   const clients = makeClients(network, wallet.privateKey);
+  await ensureMinerBond(clients, network, config.supportedIntents.length);
 
   console.log("Submitting registerMiner...");
   const { txHash, registrationId } = await registerMiner(clients, network.diamondAddress, {
@@ -68,8 +77,8 @@ export async function deployCommand(cwd: string): Promise<void> {
   console.log(`Registration id: ${registrationId}`);
 
   writeState(cwd, {
-    network: process.env.TELEGRAPH_NETWORK || "base-sepolia",
-    yamlId: config.yamlId,
+    network: process.env.TELEGRAPH_NETWORK || "beta-2",
+    yamlId,
     registrationId: registrationId.toString(),
     slug: config.slug,
     lastYamlHash: yamlHash,

@@ -27,20 +27,27 @@ other people's deployments.
 
 ## Quick start
 
-```bash
-npm install
-npm run build
+You need Node 18+, a free Cloudflare account and about 0.01 Sepolia ETH.
 
-cd your-worker-project
-npx telegraph-miner init      # asks for slug, intents, price, wallet
-# wire withTelegraphMiner(...) into your Worker entrypoint (init prints
-# exactly what to add)
-npx telegraph-miner deploy    # wrangler deploy, then registers on-chain
-npx telegraph-miner status    # check activation status any time
+```bash
+git clone https://github.com/telegraphprotocol/telegraph-cloudflare-plugin.git
+cd telegraph-cloudflare-plugin
+npm install                      # also builds the packages
+
+cd examples/kitesurf-scraper     # your miner: put your own logic in src/index.ts
+npx telegraph-miner init         # slug, intents, price; makes a wallet in .env
+npx wrangler dev                 # try it: http://localhost:8787/.well-known/telegraph.yaml
+npx wrangler login               # once, opens Cloudflare in the browser
+npx telegraph-miner deploy       # deploys, gets the bond, registers on-chain
+npx telegraph-miner status       # check activation any time
 ```
 
-See [`examples/kitesurf-scraper`](examples/kitesurf-scraper) for a minimal
-wired-up Worker.
+Before `deploy`, send about 0.01 Sepolia ETH to the wallet address `init`
+printed (free faucet, e.g.
+[Google's](https://cloud.google.com/application/web3/faucet/ethereum/sepolia)).
+That is the only thing to fetch by hand: registering takes a MACHINA bond
+(about $1, returned when you deregister), and on the testnet `deploy` mints
+test USDC and swaps it for the bond itself.
 
 ## How it works
 
@@ -49,6 +56,7 @@ telegraph-miner deploy
   → wrangler deploy                         (your code goes live)
   → GET {workers.dev url}/.well-known/telegraph.yaml   (served by the SDK)
   → sha256 the response
+  → approve the MACHINA bond (bought with test USDC if needed)
   → registerMiner(yamlUrl, yamlHash, feeAddress, minPriceUsdc, intents)
   → poll /api/miners/{id} until active/rejected
 ```
@@ -65,6 +73,6 @@ deregisters a live miner.
 
 ## Status
 
-Early / unreleased. Built against the Base Sepolia testnet deployment
-documented in the main Telegraph repo
-(`docs/testnet-deployment-base-sepolia.md`). Not yet published to npm.
+Early / unreleased. Targets the beta 2 testnet on Ethereum Sepolia
+(addresses in telegraph-docs `protocol/addresses-and-params.md`). Not yet
+published to npm, so run it from this repo as above.

@@ -2,6 +2,7 @@ import {
   resolveNetwork,
   makeClients,
   updateMiner,
+  ensureMinerBond,
   fetchServedYaml,
   pollUntilSettled,
   sha256Hex,
@@ -31,6 +32,7 @@ export async function updateCommand(cwd: string): Promise<void> {
 
   const wallet = loadOrCreateWallet(cwd);
   const clients = makeClients(network, wallet.privateKey);
+  await ensureMinerBond(clients, network, config.supportedIntents.length);
 
   console.log(`Submitting updateMiner (replacing registrationId=${state.registrationId})...`);
   const { txHash, registrationId } = await updateMiner(

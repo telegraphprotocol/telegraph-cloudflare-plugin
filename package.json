@@ -10,7 +10,8 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @telegraph/miner-core && npm run build -w @telegraph/miner-sdk -w telegraph-miner",
+    "prepare": "npm run build",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {

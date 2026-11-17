@@ -4,7 +4,7 @@ export interface MinerConfig {
   /** human-readable display name */
   name: string;
   description?: string;
-  /** canonical intent strings, e.g. ["WEB_SEARCH", "NEWS_SEARCH"] */
+  /** canonical intent strings, e.g. ["WEB_SEARCH_GENERAL"] */
   supportedIntents: string[];
   /** floor price in 6-decimal USDC (10000 = $0.01), minimum 10000 */
   minPriceUsdc: number;
